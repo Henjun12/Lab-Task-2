@@ -1,61 +1,185 @@
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;
+import java.sql.*;
 
-public class CarManagementSystem extends Frame {
+public class CarManagementSystem extends JFrame implements ActionListener {
+
+    JPanel panelTitle, panelGroupBox, panelList, panelInputList, panelButton;
+    JLabel lblTitle, lblID, lblSerial, lblMake, lblModel, lblColour, lblYear;
+    JTextField tfID, tfSerial, tfMake, tfModel, tfColour, tfYear;
+
     public CarManagementSystem() {
-        JFrame frame = new JFrame("Car Management System");
-        frame.setSize(600, 300);
-        frame.setLayout(new FlowLayout());
 
-        JPanel panel1 = new JPanel(new GridLayout(1, 2));
-        panel1.add(new JLabel("Car ID:"));
-        panel1.add(new JTextField(10));
+        panelTitle = new JPanel();
+        panelGroupBox = new JPanel();
+        panelGroupBox.setBorder(BorderFactory.createTitledBorder("Car Details"));
+        panelGroupBox.setLayout(new GridLayout(1, 2));
+        panelList = new JPanel(new GridLayout(0, 1));
+        panelInputList = new JPanel(new GridLayout(0, 1));
+        panelButton = new JPanel();
 
-        JPanel panel2 = new JPanel(new GridLayout(1, 2));
-        panel2.add(new JLabel("Serial Number:"));
-        panel2.add(new JTextField(10));
+        lblTitle = new JLabel("WELCOME TO THE CAR MANAGEMENT PAGE");
+        lblID = new JLabel("Car ID");
+        lblSerial = new JLabel("Serial");
+        lblMake = new JLabel("Car Make");
+        lblModel = new JLabel("Car Model");
+        lblColour = new JLabel("Colour");
+        lblYear = new JLabel("Year");
 
-        JPanel panel3 = new JPanel(new GridLayout(1, 2));
-        panel3.add(new JLabel("Disable the Car ID's JTextField's editability"));
-        panel3.add(new JTextField(10));
-
-        JPanel panel4 = new JPanel(new GridLayout(1, 2));
-        panel4.add(new JLabel("Car Make:"));
-        panel4.add(new JTextField(10));
-
-        JPanel panel5 = new JPanel(new GridLayout(1, 2));
-        panel5.add(new JLabel("Car Model:"));
-        panel5.add(new JTextField(10));
-
-        JPanel panel6 = new JPanel(new GridLayout(1, 2));
-        panel6.add(new JLabel("Colour:"));
-        panel6.add(new JTextField(10));
-
-        JPanel panel7 = new JPanel(new GridLayout(1, 2));
-        panel7.add(new JLabel("Year:"));
-        panel7.add(new JTextField(10));
-
-        frame.add(panel1);
-        frame.add(panel2);
-        frame.add(panel3);
-        frame.add(panel4);
-        frame.add(panel5);
-        frame.add(panel6);
-        frame.add(panel7);
+        tfID = new JTextField(10);
+        tfID.setEnabled(false);
+        tfSerial = new JTextField(10);
+        tfMake = new JTextField(10);
+        tfModel = new JTextField(10);
+        tfColour = new JTextField(10);
+        tfYear = new JTextField(10);
 
         JButton saveButton = new JButton("Save");
+        saveButton.addActionListener(this);
         JButton searchButton = new JButton("Search");
+        searchButton.addActionListener(this);
         JButton deleteButton = new JButton("Delete");
+        deleteButton.addActionListener(this);
         JButton exitButton = new JButton("Exit");
+        exitButton.addActionListener(this);
 
-        frame.add(saveButton);
-        frame.add(searchButton);
-        frame.add(deleteButton);
-        frame.add(exitButton);
+        panelTitle.add(lblTitle);
 
-        frame.setVisible(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        panelList.add(lblID);
+        panelList.add(lblSerial);
+        panelList.add(lblMake);
+        panelList.add(lblModel);
+        panelList.add(lblColour);
+        panelList.add(lblYear);
+
+        panelInputList.add(tfID);
+        panelInputList.add(tfSerial);
+        panelInputList.add(tfMake);
+        panelInputList.add(tfModel);
+        panelInputList.add(tfColour);
+        panelInputList.add(tfYear);
+
+        panelGroupBox.add(panelList);
+        panelGroupBox.add(panelInputList);
+
+        panelButton.add(saveButton);
+        panelButton.add(searchButton);
+        panelButton.add(deleteButton);
+        panelButton.add(exitButton);
+
+        setLayout(new GridLayout(4, 1));
+        add(panelTitle);
+        add(panelGroupBox);
+        add(panelButton);
+
+        setTitle("Car Management System");
+        setSize(700, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getActionCommand().equals("Save")) {
+            saveRecord();
+        } else if (e.getActionCommand().equals("Search")) {
+            searchRecord();
+        } else if (e.getActionCommand().equals("Delete")) {
+            deleteRecord();
+        }else if (e.getActionCommand().equals("Exit")) {
+            exitApplication();
+        }
+    }
+
+    private void saveRecord() {
+        String serial = tfSerial.getText();
+        String make = tfMake.getText();
+        String model = tfModel.getText();
+        String colour = tfColour.getText();
+        int year = Integer.parseInt(tfYear.getText());
+
+        try (Connection con = DriverManager.getConnection("jdbc:mysql://localhost/CARS", "root", "Cina@Trade12");
+             PreparedStatement pstmt = con.prepareStatement("INSERT INTO car_info (serialNum, make, model, colour, year) VALUES (?, ?, ?, ?, ?)")) {
+
+            pstmt.setString(1, serial);
+            pstmt.setString(2, make);
+            pstmt.setString(3, model);
+            pstmt.setString(4, colour);
+            pstmt.setInt(5, year);
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(this, "The record has been saved successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to save the record", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Failed to save the record: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid year format", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void searchRecord() {
+        String carID = JOptionPane.showInputDialog(this, "Enter Car ID:");
+        if (carID != null && !carID.isEmpty()) {
+            try (Connection con = DriverManager.getConnection("jdbc:mysql://localhost/CARS", "root", "Cina@Trade12");
+                 PreparedStatement pstmt = con.prepareStatement("SELECT * FROM car_info WHERE carID = ?")) {
+
+                pstmt.setInt(1, Integer.parseInt(carID));
+                ResultSet rs = pstmt.executeQuery();
+                if (rs.next()) {
+                    tfID.setText(Integer.toString(rs.getInt("carID")));
+                    tfSerial.setText(rs.getString("serialNum"));
+                    tfMake.setText(rs.getString("make"));
+                    tfModel.setText(rs.getString("model"));
+                    tfColour.setText(rs.getString("colour"));
+                    tfYear.setText(Integer.toString(rs.getInt("year")));
+                } else {
+                    JOptionPane.showMessageDialog(this, "Record not found", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Failed to search for the record: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Invalid car ID format", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void deleteRecord() {
+        String carID = JOptionPane.showInputDialog(this, "Enter Car ID:");
+        if (carID != null && !carID.isEmpty()) {
+            try (Connection con = DriverManager.getConnection("jdbc:mysql://localhost/CARS", "root", "Cina@Trade12");
+                 PreparedStatement pstmt = con.prepareStatement("DELETE FROM car_info WHERE carID = ?")) {
+
+                pstmt.setInt(1, Integer.parseInt(carID));
+                int rowsAffected = pstmt.executeUpdate();
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(this, "The record has been deleted successfully", "Success", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Record not found", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Failed to delete the record: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Invalid car ID format", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void exitApplication() {
+        int confirmed = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to exit the application?", "Confirm Exit",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirmed == JOptionPane.YES_OPTION) {
+            dispose();
+            System.exit(0);
+        }
     }
 
     public static void main(String[] args) {
